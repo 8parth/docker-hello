@@ -1,0 +1,35 @@
+version: '2'
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local  
+services:
+  db:
+    image: postgres:9.4.1
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file: .env
+  web:
+    build: .
+    command: bin/rails server --port 3000 --binding 0.0.0.0
+    ports:
+      - "3000:3000"
+    links:
+      - db
+      - redis
+    depends_on:
+      - db
+    env_file: .env
+  redis:
+    image: redis:3.2.4-alpine
+    ports:
+      # We'll bind our host's port 6379 to redis's port 6379, so we can use
+      # Redis Desktop Manager (or other tools) with it:
+      - 6379:6379
+    volumes:
+      # We'll mount the 'redis-data' volume into the location redis stores it's data:
+      - redis-data:/var/lib/redis
+    command: redis-server --appendonly yes
